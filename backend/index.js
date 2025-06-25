@@ -1,40 +1,37 @@
-const express = require('express')
-const cors = require('cors')
-const http = require('http')
-const { Server } = require('socket.io')
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
 
-const app = express()
-app.use(cors())
-app.use(express.json())
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const server = http.createServer(app)
+const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: '*', // frontend URL in produzione
-    methods: ['GET', 'POST']
+    origin: "*"
   }
-})
+});
 
-// API REST example
-app.get('/api/ping', (req, res) => {
-  res.send('pong')
-})
+io.on("connection", (socket) => {
+  console.log("🟢 Nuovo client connesso:", socket.id);
 
-// WebSocket example
-io.on('connection', (socket) => {
-  console.log('👤 New client connected:', socket.id)
+  socket.on("send_answer", (data) => {
+    console.log("📩 Risposta ricevuta:", data);
+    io.emit("new_answer", data);
+  });
 
-  socket.on('message', (msg) => {
-    console.log('💬 Received:', msg)
-    io.emit('message', msg) // broadcast
-  })
+  socket.on("disconnect", () => {
+    console.log("🔴 Client disconnesso:", socket.id);
+  });
+});
 
-  socket.on('disconnect', () => {
-    console.log('❌ Client disconnected:', socket.id)
-  })
-})
+app.get("/", (req, res) => {
+  res.send("Backend real-time attivo!");
+});
 
-const PORT = process.env.PORT || 4000
-server.listen(PORT, () => {
-  console.log(`🚀 Backend listening on http://localhost:${PORT}`)
-})
+server.listen(5000, () => {
+  console.log("✅ Server backend in ascolto su porta 5000");
+});
